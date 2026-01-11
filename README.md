@@ -11,7 +11,7 @@ This project serves as a Proof of Concept for **network optimization**, **concur
 * **Concurrent Architecture:** Utilizes a custom `FixedThreadPool` to manage worker threads, maximizing bandwidth utilization.
 * **Resilient Network I/O:** Implements HTTP `Range` headers to fetch partial byte streams.
 * **Smart Size Detection:** Automatically falls back to parsing `Content-Range` headers if the server restricts standard `HEAD` requests.
-* **Non-Blocking Disk Writes:** Uses `RandomAccessFile` to write to specific disk sectors concurrently, preventing file locking issues and reducing fragmentation.
+* **Concurrent Disk Writes:** Uses `RandomAccessFile` to write to specific disk sectors concurrently, ensuring thread safety through logical offset isolation rather than locking.
 * **Memory Efficiency:** Streams data directly to disk using buffered I/O, ensuring low memory footprint even for gigabyte-scale downloads.
 
 ## How It Works (System Design)
