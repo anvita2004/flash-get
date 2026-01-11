@@ -1,4 +1,4 @@
-# Flash-Get: Multi-Threaded Java Downloader
+#Flash-Get: Multi-Threaded Java Downloader
 
 ![Java](https://img.shields.io/badge/Java-11%2B-orange) ![Concurrency](https://img.shields.io/badge/Concurrency-Multi--Threaded-blue) ![License](https://img.shields.io/badge/License-MIT-green)
 
