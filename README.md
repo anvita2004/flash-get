@@ -1,49 +1,35 @@
-# Flash-Get
+# Flash-Get: Multi-Threaded Java Downloader
 
-Flash-Get is a **multi-threaded Java command-line file downloader** designed to accelerate large file downloads by splitting files into byte-range chunks and downloading them concurrently.
+![Java](https://img.shields.io/badge/Java-11%2B-orange) ![Concurrency](https://img.shields.io/badge/Concurrency-Multi--Threaded-blue) ![License](https://img.shields.io/badge/License-MIT-green)
 
-This project focuses on **concurrency, networking, and low-level file I/O**, demonstrating how real-world download managers work under the hood.
+**Flash-Get** is a high-throughput, command-line file downloader designed to accelerate large file transfers. It mimics the architecture of enterprise download managers (like IDM) by splitting files into logical byte-range chunks and downloading them concurrently using `ExecutorService`.
 
----
+This project serves as a Proof of Concept for **network optimization**, **concurrency control**, and **low-level disk I/O** in Java without relying on external libraries.
 
 ## Key Features
 
-- Java CLI application (no GUI, no external libraries)
-- Concurrent downloads using `ExecutorService`
-- HTTP byte-range requests (`Range` headers)
-- Parallel disk writes using `RandomAccessFile`
-- Pre-allocation of output file to avoid fragmentation
-- Fallback handling for servers that do not return `Content-Length`
-- Safe resource handling with try-with-resources
-- Compatible with Java 11+
+* **Concurrent Architecture:** Utilizes a custom `FixedThreadPool` to manage worker threads, maximizing bandwidth utilization.
+* **Resilient Network I/O:** Implements HTTP `Range` headers to fetch partial byte streams.
+* **Smart Size Detection:** Automatically falls back to parsing `Content-Range` headers if the server restricts standard `HEAD` requests.
+* **Non-Blocking Disk Writes:** Uses `RandomAccessFile` to write to specific disk sectors concurrently, preventing file locking issues and reducing fragmentation.
+* **Memory Efficiency:** Streams data directly to disk using buffered I/O, ensuring low memory footprint even for gigabyte-scale downloads.
 
----
+## How It Works (System Design)
 
-## How It Works
+1.  **Initialization:** The program accepts a target URL and a thread count (concurrency limit).
+2.  **Metadata Fetching:** It queries the server (via `HEAD` or partial `GET`) to determine the total `Content-Length`.
+3.  **Logical Sharding:** The file size is divided by the thread count to calculate `startByte` and `endByte` for each worker.
+4.  **Parallel Execution:**
+    * Worker threads initiate independent HTTP connections.
+    * Data is streamed and written to the pre-allocated file on disk using `seek()` operations.
+5.  **Synchronization:** The main thread uses `Future.get()` to act as a barrier, ensuring all chunks are successfully persisted before closing the file.
 
-1. The program accepts a file URL and number of threads via the command line.
-2. It determines the file size using:
-   - An HTTP `HEAD` request, or
-   - A fallback `GET` request with `Range: bytes=0-0` and `Content-Range` parsing.
-3. The file is split into non-overlapping byte ranges based on the thread count.
-4. Each byte range is downloaded concurrently by a worker thread.
-5. Each worker writes directly to its assigned position in the output file using `RandomAccessFile`.
-6. The main thread waits for all workers to complete before exiting.
+## Build & Usage
 
----
+### Prerequisites
+* Java Development Kit (JDK) 11 or higher.
 
-## Why Multithreading Improves Download Performance
-
-Single-threaded downloads often underutilize available network bandwidth.  
-By downloading multiple byte ranges in parallel, Flash-Get can:
-
-- Better utilize network throughput
-- Reduce total download time
-- Mimic real-world systems such as multipart downloads used by cloud storage providers
-
----
-
-## How to Compile
-
+### Compilation
 ```bash
 javac FlashGet.java DownloadWorker.java
+jar cfe flashget.jar FlashGet *.class
